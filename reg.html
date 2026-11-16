@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMIU Science Society - Cyber Security Event Registration</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QRCode.js for generating QR codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- html2pdf.js for downloading PDF passes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Html5-qrcode for live scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        smiuNavy: '#0B1B3D',
+                        smiuDark: '#070B14',
+                        cyberBlue: '#00F0FF',
+                        cyberGreen: '#00FF66'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #070B14; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .cyber-card { background: rgba(11, 27, 61, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(0, 240, 255, 0.2); }
+        .cyber-input { background: rgba(7, 11, 20, 0.8); border: 1px solid rgba(0, 240, 255, 0.3); color: white; }
+        .cyber-input:focus { border-color: #00F0FF; outline: none; box-shadow: 0 0 10px rgba(0, 240, 255, 0.3); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header / Navbar -->
+    <header class="cyber-card border-b border-cyan-900/40 sticky top-0 z-50 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center space-x-4">
+            <!-- Official Logo -->
+            <img src="1675947968292.jpeg" alt="SMIU Science Society Logo" class="w-12 h-12 rounded-full border-2 border-cyan-400 object-cover shadow-md">
+            <div>
+                <h1 class="text-lg font-bold tracking-wider text-white">SMIU SCIENCE SOCIETY</h1>
+                <p class="text-xs text-cyan-400">Cyber Security Event 2026 — Official Portal</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs (Hidden until Organizer Login) -->
+        <div id="navTabs" class="hidden flex items-center space-x-2 bg-smiuNavy/80 p-1.5 rounded-xl border border-cyan-500/30">
+            <button onclick="switchTab('register')" id="tab-register" class="px-4 py-2 text-xs font-semibold rounded-lg bg-cyan-500 text-smiuDark transition"><i class="fa-solid fa-user-plus mr-1.5"></i> Registration</button>
+            <button onclick="switchTab('scanner')" id="tab-scanner" class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-300 hover:text-white transition"><i class="fa-solid fa-qrcode mr-1.5"></i> QR Scanner</button>
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-300 hover:text-white transition"><i class="fa-solid fa-file-excel mr-1.5"></i> Dashboard & Excel</button>
+        </div>
+
+        <!-- Organizer Lock/Unlock Button -->
+        <div>
+            <button id="organizerToggleBtn" onclick="toggleOrganizerMode()" class="px-4 py-2 text-xs font-bold rounded-lg bg-smiuNavy border border-cyan-400/50 text-cyan-300 hover:bg-cyan-500 hover:text-smiuDark transition shadow-lg">
+                <i class="fa-solid fa-lock mr-1.5"></i> Organizer Login
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto px-4 py-8 flex-grow">
+
+        <!-- TAB 1: REGISTRATION & PASS -->
+        <section id="section-register" class="space-y-8">
+            <!-- Intro Banner -->
+            <div class="cyber-card rounded-2xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl"></div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-2">Cyber Security Event — Attendee Registration</h2>
+                <p class="text-sm text-cyan-300 max-w-xl mx-auto mb-4">Organized by Sindh Madressatul Islam University Science Society. Register below to secure your seat and generate your official entry pass.</p>
+                <div class="inline-flex items-center space-x-2 bg-cyan-950/60 border border-cyan-500/40 px-4 py-1.5 rounded-full text-xs text-cyan-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Registrations Open • Limited Seats Available</span>
+                </div>
+            </div>
+
+            <!-- Registration Form Card -->
+            <div id="formContainer" class="cyber-card rounded-2xl p-6 md:p-8 shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-6 flex items-center"><i class="fa-solid fa-pen-to-square text-cyan-400 mr-2"></i> Attendee Registration Form</h3>
+                
+                <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">1. Full Name *</label>
+                            <input type="text" id="fullName" required placeholder="e.g. Suneel Kumar" class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">2. Student ID / Roll Number *</label>
+                            <input type="text" id="studentId" required placeholder="e.g. CSC-23S-085" class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">3. Department *</label>
+                            <select id="department" required class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                                <option value="" disabled selected>Select Department</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Software Engineering">Software Engineering</option>
+                                <option value="Artificial Intelligence">Artificial Intelligence</option>
+                                <option value="Cyber Security">Cyber Security</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">4. Semester *</label>
+                            <select id="semester" required class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                                <option value="" disabled selected>Select Semester</option>
+                                <option value="1st Semester">1st Semester</option>
+                                <option value="2nd Semester">2nd Semester</option>
+                                <option value="3rd Semester">3rd Semester</option>
+                                <option value="4th Semester">4th Semester</option>
+                                <option value="5th Semester">5th Semester</option>
+                                <option value="6th Semester">6th Semester</option>
+                                <option value="7th Semester">7th Semester</option>
+                                <option value="8th Semester">8th Semester</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">5. University / Institution *</label>
+                            <input type="text" id="institution" required value="SMIU" class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">6. Email Address *</label>
+                            <input type="email" id="email" required placeholder="student@gmail.com" class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">7. WhatsApp / Contact Number *</label>
+                            <input type="text" id="phone" required placeholder="03XX-XXXXXXX" class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">8. Experience Level in Cyber Security *</label>
+                            <select id="experienceLevel" required class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                                <option value="" disabled selected>Select Level</option>
+                                <option value="Beginner">Beginner (No prior experience)</option>
+                                <option value="Intermediate">Intermediate (Basic networking & Linux)</option>
+                                <option value="Advanced">Advanced (CTF player / practitioner)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-cyan-300 mb-2">10. Bring Own Laptop for Hands-On? *</label>
+                            <select id="laptop" required class="w-full px-4 py-3 rounded-xl cyber-input text-sm">
+                                <option value="" disabled selected>Select Option</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-cyan-300 mb-2">9. Areas of Interest (Select multiple if needed)</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs bg-smiuNavy/40 p-4 rounded-xl border border-cyan-900/50">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="interest" value="Ethical Hacking" class="rounded text-cyan-500"> <span>Ethical Hacking</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="interest" value="Network Security" class="rounded text-cyan-500"> <span>Network Security</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="interest" value="Digital Forensics" class="rounded text-cyan-500"> <span>Digital Forensics</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="interest" value="Web App Security" class="rounded text-cyan-500"> <span>Web Security</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="interest" value="CTF Competitions" class="rounded text-cyan-500"> <span>CTF Competitions</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" name="interest" value="Career Guidance" class="rounded text-cyan-500"> <span>Career Guidance</span></label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-cyan-300 mb-2">11. Questions or Expectations (Optional)</label>
+                        <textarea id="questions" rows="2" placeholder="Any specific topic you want covered?" class="w-full px-4 py-3 rounded-xl cyber-input text-sm"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-smiuDark font-bold text-sm tracking-wide shadow-lg hover:opacity-90 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span>Generate Official Entry Pass</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Digital Pass Result Card (Hidden Initially) -->
+            <div id="passSection" class="hidden space-y-6">
+                <div class="flex justify-between items-center bg-cyan-950/60 p-4 rounded-xl border border-cyan-500/40">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-circle-check text-emerald-400 text-2xl"></i>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Registration Successful!</h4>
+                            <p class="text-xs text-cyan-300">Your official entry pass has been generated below.</p>
+                        </div>
+                    </div>
+                    <button onclick="resetForm()" class="px-3 py-1.5 rounded-lg bg-smiuNavy border border-cyan-500/30 text-xs text-cyan-300 hover:bg-cyan-500 hover:text-smiuDark transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Register Another
+                    </button>
+                </div>
+
+                <!-- Printable Official Badge/Pass Preview -->
+                <div id="passCard" class="max-w-sm mx-auto bg-white text-[#0B1B3D] rounded-xl shadow-2xl overflow-hidden border-2 border-[#0B1B3D]">
+                    <!-- Pass Header -->
+                    <div class="bg-[#0B1B3D] text-white p-4 text-center relative">
+                        <div class="absolute top-3 left-3">
+                            <img src="1675947968292.jpeg" alt="Logo" class="w-8 h-8 rounded-full border border-cyan-400 object-cover">
+                        </div>
+                        <h3 class="text-[9px] font-bold tracking-widest text-cyan-300 uppercase">SINDH MADRESSATUL ISLAM UNIVERSITY</h3>
+                        <h2 class="text-xs font-extrabold tracking-wide mt-0.5">SMIU SCIENCE SOCIETY</h2>
+                        <div class="mt-1.5 inline-block bg-cyan-400 text-[#0B1B3D] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            Cyber Security Event Pass 2026
+                        </div>
+                    </div>
+
+                    <!-- Pass Body -->
+                    <div class="p-4 space-y-3 bg-gray-50 text-xs">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+                            <div>
+                                <span class="text-[9px] uppercase font-bold text-gray-400 block">Registration Pass ID</span>
+                                <span id="passIdText" class="text-xs font-mono font-bold text-[#0B1B3D]">SMIU-CS26-0000</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[9px] uppercase font-bold text-gray-400 block">Track Level</span>
+                                <span id="passTrackText" class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">Advanced</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-[9px] uppercase font-bold text-gray-400 block">Attendee Full Name</span>
+                            <span id="passNameText" class="text-sm font-extrabold text-[#0B1B3D]">Suneel Kumar</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-[9px] uppercase font-bold text-gray-400 block">Student ID / Roll No.</span>
+                                <span id="passRollText" class="font-bold text-gray-800">CSC-23S-085</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] uppercase font-bold text-gray-400 block">Department</span>
+                                <span id="passDeptText" class="font-bold text-gray-800">Computer Science</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 border-t border-gray-200 pt-2">
+                            <div>
+                                <span class="text-[9px] uppercase font-bold text-gray-400 block">Institution</span>
+                                <span id="passInstText" class="font-bold text-gray-800">SMIU</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] uppercase font-bold text-gray-400 block">Semester</span>
+                                <span id="passSemText" class="font-bold text-gray-800">8th Semester</span>
+                            </div>
+                        </div>
+
+                        <!-- QR Code Box -->
+                        <div class="pt-1 flex flex-col items-center justify-center border-t border-dashed border-gray-300">
+                            <div id="qrcode" class="p-1 bg-white rounded-lg shadow-inner border border-gray-200 my-1"></div>
+                            <span class="text-[9px] text-gray-500 font-medium">Scan at event entrance for verification</span>
+                        </div>
+                    </div>
+
+                    <!-- Pass Footer -->
+                    <div class="bg-gray-100 px-4 py-2 text-center border-t border-gray-200">
+                        <p class="text-[9px] text-gray-500 font-medium">Please present this pass upon arrival.</p>
+                    </div>
+                </div>
+
+                <!-- Download & Actions -->
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button onclick="downloadPDF()" class="px-6 py-3 rounded-xl bg-cyan-500 text-smiuDark font-bold text-xs uppercase tracking-wider shadow-lg hover:bg-cyan-400 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Download Official Pass (PDF)</span>
+                    </button>
+                    <button onclick="joinWhatsAppChannel()" class="px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:bg-emerald-500 transition flex items-center justify-center space-x-2">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                        <span>Join WhatsApp Channel</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: QR ATTENDANCE SCANNER (Organizer Only) -->
+        <section id="section-scanner" class="hidden space-y-6">
+            <div class="cyber-card rounded-2xl p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center"><i class="fa-solid fa-qrcode text-cyan-400 mr-2"></i> Event-Day QR Attendance Scanner</h3>
+                        <p class="text-xs text-cyan-300 mt-1">Scan attendee passes using your camera or enter their Pass ID manually to record entry.</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-bold">Scanner Active</span>
+                </div>
+
+                <!-- Camera Viewport -->
+                <div class="max-w-md mx-auto bg-black/60 rounded-2xl p-4 border border-cyan-500/30 mb-6">
+                    <div id="reader" class="rounded-xl overflow-hidden"></div>
+                </div>
+
+                <!-- Manual Pass ID Check-in Fallback -->
+                <div class="max-w-md mx-auto flex gap-3">
+                    <input type="text" id="manualPassInput" placeholder="Enter Pass ID (e.g. SMIU-CS26-XXXX)" class="flex-grow px-4 py-3 rounded-xl cyber-input text-xs font-mono">
+                    <button onclick="manualCheckIn()" class="px-5 py-3 rounded-xl bg-cyan-500 text-smiuDark font-bold text-xs uppercase tracking-wider hover:bg-cyan-400 transition">Check In</button>
+                </div>
+
+                <!-- Scan Status Notification -->
+                <div id="scanResultAlert" class="hidden mt-6 max-w-md mx-auto p-4 rounded-xl text-center text-xs font-bold"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: DASHBOARD & EXCEL (Organizer Only) -->
+        <section id="section-dashboard" class="hidden space-y-6">
+            <div class="cyber-card rounded-2xl p-6 md:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center"><i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i> Attendance & Registration Analytics</h3>
+                        <p class="text-xs text-cyan-300">Live records of registered students and attendance status.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="exportToExcel()" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition flex items-center space-x-2">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Download Excel (.XLSX)</span>
+                        </button>
+                        <button onclick="clearAllData()" class="px-3 py-2.5 rounded-xl bg-red-950/80 border border-red-500/30 text-red-400 text-xs hover:bg-red-900 transition" title="Clear all data">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Counters -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-smiuNavy/60 p-4 rounded-xl border border-cyan-900/50">
+                        <span class="text-xs text-cyan-300 font-semibold block">Total Registered</span>
+                        <span id="statTotal" class="text-2xl font-black text-white mt-1 block">0</span>
+                    </div>
+                    <div class="bg-smiuNavy/60 p-4 rounded-xl border border-emerald-900/50">
+                        <span class="text-xs text-emerald-300 font-semibold block">Marked Present</span>
+                        <span id="statPresent" class="text-2xl font-black text-emerald-400 mt-1 block">0</span>
+                    </div>
+                    <div class="bg-smiuNavy/60 p-4 rounded-xl border border-blue-900/50">
+                        <span class="text-xs text-blue-300 font-semibold block">Laptops Bringing</span>
+                        <span id="statLaptops" class="text-2xl font-black text-blue-400 mt-1 block">0</span>
+                    </div>
+                </div>
+
+                <!-- Attendees Table -->
+                <div class="overflow-x-auto rounded-xl border border-cyan-900/50">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-smiuNavy text-cyan-300 uppercase font-bold tracking-wider">
+                            <tr>
+                                <th class="p-3">Pass ID</th>
+                                <th class="p-3">Full Name</th>
+                                <th class="p-3">Roll No</th>
+                                <th class="p-3">Dept & Sem</th>
+                                <th class="p-3">WhatsApp</th>
+                                <th class="p-3">Attendance</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendeesTableBody" class="divide-y divide-cyan-900/30 bg-smiuDark/40">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="cyber-card border-t border-cyan-900/40 text-center py-4 text-xs text-cyan-400/80">
+        <p>© 2026 Sindh Madressatul Islam University (SMIU) Science Society. All rights reserved.</p>
+    </footer>
+
+    <!-- Organizer Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="cyber-card rounded-2xl max-w-sm w-full p-6 space-y-4 border border-cyan-500/40">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-white flex items-center"><i class="fa-solid fa-lock text-cyan-400 mr-2"></i> Organizer Authentication</h3>
+                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-cyan-300">Enter organizer passcode to unlock Scanner and Excel Dashboard.</p>
+            <input type="password" id="organizerPasscode" placeholder="Enter passcode" class="w-full px-4 py-2.5 rounded-xl cyber-input text-xs">
+            <button onclick="verifyOrganizer()" class="w-full py-2.5 rounded-xl bg-cyan-500 text-smiuDark font-bold text-xs uppercase tracking-wider hover:bg-cyan-400 transition">Unlock Portal</button>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        let registrations = JSON.parse(localStorage.getItem('smiu_cyber_registrations')) || [];
+        let currentPassId = '';
+        let html5QrCode = null;
+
+        function saveToStorage() {
+            localStorage.setItem('smiu_cyber_registrations', JSON.stringify(registrations));
+        }
+
+        function switchTab(tab) {
+            document.getElementById('section-register').classList.add('hidden');
+            document.getElementById('section-scanner').classList.add('hidden');
+            document.getElementById('section-dashboard').classList.add('hidden');
+
+            document.getElementById('tab-register').className = "px-4 py-2 text-xs font-semibold rounded-lg text-gray-300 hover:text-white transition";
+            document.getElementById('tab-scanner').className = "px-4 py-2 text-xs font-semibold rounded-lg text-gray-300 hover:text-white transition";
+            document.getElementById('tab-dashboard').className = "px-4 py-2 text-xs font-semibold rounded-lg text-gray-300 hover:text-white transition";
+
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = "px-4 py-2 text-xs font-semibold rounded-lg bg-cyan-500 text-smiuDark transition";
+
+            if (tab === 'scanner') {
+                initScanner();
+            } else {
+                stopScanner();
+            }
+
+            if (tab === 'dashboard') {
+                renderDashboard();
+            }
+        }
+
+        function toggleOrganizerMode() {
+            const navTabs = document.getElementById('navTabs');
+            if (navTabs.classList.contains('hidden')) {
+                document.getElementById('loginModal').classList.remove('hidden');
+            } else {
+                navTabs.classList.add('hidden');
+                document.getElementById('organizerToggleBtn').innerHTML = '<i class="fa-solid fa-lock mr-1.5"></i> Organizer Login';
+                switchTab('register');
+            }
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function verifyOrganizer() {
+            const pass = document.getElementById('organizerPasscode').value;
+            if (pass === 'smiu2026') {
+                closeLoginModal();
+                document.getElementById('organizerPasscode').value = '';
+                document.getElementById('navTabs').classList.remove('hidden');
+                document.getElementById('organizerToggleBtn').innerHTML = '<i class="fa-solid fa-lock-open mr-1.5 text-emerald-400"></i> Organizer Mode';
+                switchTab('scanner');
+            } else {
+                alert('Incorrect organizer passcode!');
+            }
+        }
+
+        function handleRegistration(e) {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const studentId = document.getElementById('studentId').value.trim();
+            const department = document.getElementById('department').value;
+            const semester = document.getElementById('semester').value;
+            const institution = document.getElementById('institution').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const experienceLevel = document.getElementById('experienceLevel').value;
+            const laptop = document.getElementById('laptop').value;
+            const questions = document.getElementById('questions').value.trim();
+
+            const interests = Array.from(document.querySelectorAll('input[name="interest"]:checked')).map(cb => cb.value);
+
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            currentPassId = `SMIU-CS26-${randomNum}`;
+
+            const newReg = {
+                passId: currentPassId,
+                fullName,
+                studentId,
+                department,
+                semester,
+                institution,
+                email,
+                phone,
+                experienceLevel,
+                laptop,
+                interests: interests.join(', '),
+                questions,
+                status: 'Absent',
+                checkInTime: '-'
+            };
+
+            registrations.push(newReg);
+            saveToStorage();
+
+            document.getElementById('passIdText').innerText = currentPassId;
+            document.getElementById('passTrackText').innerText = experienceLevel;
+            document.getElementById('passNameText').innerText = fullName;
+            document.getElementById('passRollText').innerText = studentId;
+            document.getElementById('passDeptText').innerText = department;
+            document.getElementById('passInstText').innerText = institution;
+            document.getElementById('passSemText').innerText = semester;
+
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById("qrcode"), {
+                text: `${currentPassId}|${fullName}|${studentId}|${department}`,
+                width: 110,
+                height: 110,
+                colorDark: "#0B1B3D",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('formContainer').classList.add('hidden');
+            document.getElementById('passSection').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('registrationForm').reset();
+            document.getElementById('passSection').classList.add('hidden');
+            document.getElementById('formContainer').classList.remove('hidden');
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('passCard');
+            const opt = {
+                margin: 0.1,
+                filename: `SMIU_Cyber_Pass_${document.getElementById('passRollText').innerText}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: [4.2, 6.2], orientation: 'portrait' }
+            };
+            html2pdf().from(element).set(opt).save();
+        }
+
+        function joinWhatsAppChannel() {
+            window.open('https://whatsapp.com/channel/0029VaPrlC32UPB7NfPq012p', '_blank');
+        }
+
+        function initScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.log(`Unable to start scanning: ${err}`);
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.log("Failed to stop scanner", err));
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            const parts = decodedText.split('|');
+            const scannedId = parts[0];
+            processCheckIn(scannedId);
+        }
+
+        function onScanFailure(error) {}
+
+        function manualCheckIn() {
+            const inputId = document.getElementById('manualPassInput').value.trim();
+            if (inputId) {
+                processCheckIn(inputId);
+                document.getElementById('manualPassInput').value = '';
+            }
+        }
+
+        function processCheckIn(passId) {
+            const attendee = registrations.find(r => r.passId === passId);
+            const alertBox = document.getElementById('scanResultAlert');
+            alertBox.classList.remove('hidden');
+
+            if (attendee) {
+                if (attendee.status === 'Present') {
+                    alertBox.className = "mt-6 max-w-md mx-auto p-4 rounded-xl text-center text-xs font-bold bg-amber-950/80 border border-amber-500/40 text-amber-300";
+                    alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Already Checked In: <strong>${attendee.fullName}</strong> (${attendee.passId})`;
+                } else {
+                    attendee.status = 'Present';
+                    attendee.checkInTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    saveToStorage();
+
+                    alertBox.className = "mt-6 max-w-md mx-auto p-4 rounded-xl text-center text-xs font-bold bg-emerald-950/80 border border-emerald-500/40 text-emerald-300";
+                    alertBox.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Checked In Successfully: <strong>${attendee.fullName}</strong> (${attendee.department})`;
+                }
+            } else {
+                alertBox.className = "mt-6 max-w-md mx-auto p-4 rounded-xl text-center text-xs font-bold bg-red-950/80 border border-red-500/40 text-red-300";
+                alertBox.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Invalid Pass ID: <strong>${passId}</strong> not found in database.`;
+            }
+        }
+
+        function renderDashboard() {
+            const tbody = document.getElementById('attendeesTableBody');
+            tbody.innerHTML = '';
+
+            let total = registrations.length;
+            let present = registrations.filter(r => r.status === 'Present').length;
+            let laptops = registrations.filter(r => r.laptop === 'Yes').length;
+
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statPresent').innerText = present;
+            document.getElementById('statLaptops').innerText = laptops;
+
+            if (total === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">No registrations recorded yet.</td></tr>`;
+                return;
+            }
+
+            registrations.forEach((r, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-cyan-950/20 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-cyan-400">${r.passId}</td>
+                    <td class="p-3 font-bold text-white">${r.fullName}</td>
+                    <td class="p-3">${r.studentId}</td>
+                    <td class="p-3">${r.department} (${r.semester})</td>
+                    <td class="p-3">${r.phone}</td>
+                    <td class="p-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${r.status === 'Present' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-gray-800 text-gray-400 border border-gray-700'}">
+                            ${r.status} ${r.checkInTime !== '-' ? '(' + r.checkInTime + ')' : ''}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="toggleAttendance('${r.passId}')" class="px-2.5 py-1 rounded-lg bg-smiuNavy border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500 hover:text-smiuDark transition" title="Toggle status">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                        <button onclick="deleteAttendee(${index})" class="px-2.5 py-1 rounded-lg bg-red-950/50 border border-red-500/30 text-red-400 hover:bg-red-900 transition ml-1" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleAttendance(passId) {
+            const att = registrations.find(r => r.passId === passId);
+            if (att) {
+                if (att.status === 'Present') {
+                    att.status = 'Absent';
+                    att.checkInTime = '-';
+                } else {
+                    att.status = 'Present';
+                    att.checkInTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                }
+                saveToStorage();
+                renderDashboard();
+            }
+        }
+
+        function deleteAttendee(index) {
+            if (confirm('Are you sure you want to remove this registration?')) {
+                registrations.splice(index, 1);
+                saveToStorage();
+                renderDashboard();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('WARNING: This will delete all attendee records! Continue?')) {
+                registrations = [];
+                saveToStorage();
+                renderDashboard();
+            }
+        }
+
+        function exportToExcel() {
+            if (registrations.length === 0) {
+                alert('No data available to export.');
+                return;
+            }
+
+            const dataToExport = registrations.map(r => ({
+                "Pass ID": r.passId,
+                "Full Name": r.fullName,
+                "Student ID": r.studentId,
+                "Department": r.department,
+                "Semester": r.semester,
+                "Institution": r.institution,
+                "Email": r.email,
+                "WhatsApp": r.phone,
+                "Experience Level": r.experienceLevel,
+                "Bring Laptop": r.laptop,
+                "Interests": r.interests,
+                "Questions": r.questions,
+                "Attendance Status": r.status,
+                "Check-In Time": r.checkInTime
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Cyber Event Attendance");
+
+            XLSX.writeFile(workbook, "SMIU_Cyber_Security_Event_Attendance.xlsx");
+        }
+    </script>
+</body>
+</html>
